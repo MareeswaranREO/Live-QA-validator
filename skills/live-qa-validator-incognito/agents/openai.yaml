@@ -1,0 +1,4 @@
+interface:
+  display_name: "Live QA Validator Incognito"
+  short_description: "Run QA in a fresh isolated Chrome DevTools context"
+  default_prompt: "Use $live-qa-validator-incognito to start the Incognito variant live QA session."

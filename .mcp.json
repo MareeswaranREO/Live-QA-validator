@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "live_qa_validator_incognito": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/server.mjs"]
+    }
+  }
+}

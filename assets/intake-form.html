@@ -1,0 +1,474 @@
+<title>Live QA Incognito Intake</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#f7f9fc; --surface:#ffffff; --border:#dce3ed; --border-strong:#c3cee0;
+  --text:#172033; --text-muted:#667085; --accent:#1769e0; --accent-ink:#ffffff;
+  --danger:#b42318; --danger-bg:#fdeceb; --success:#12805c; --success-bg:#e9f7f1;
+  --bs-bg:#fff1ec; --bs-border:#f3c8b8; --bs-ink:#c1440e;
+  --focus:#1769e055;
+  --font-display:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --font-body:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1320; --surface:#161d2c; --border:#2a3550; --border-strong:#3a4770;
+    --text:#eef2f9; --text-muted:#93a1bd; --accent:#5b93ef; --accent-ink:#0b1220;
+    --danger:#ff8177; --danger-bg:#3a1a1a; --success:#4fd6ac; --success-bg:#123328;
+    --bs-bg:#2a1c14; --bs-border:#5a3a26; --bs-ink:#ff9a63;
+    --focus:#5b93ef55;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1320; --surface:#161d2c; --border:#2a3550; --border-strong:#3a4770;
+  --text:#eef2f9; --text-muted:#93a1bd; --accent:#5b93ef; --accent-ink:#0b1220;
+  --danger:#ff8177; --danger-bg:#3a1a1a; --success:#4fd6ac; --success-bg:#123328;
+  --bs-bg:#2a1c14; --bs-border:#5a3a26; --bs-ink:#ff9a63;
+  --focus:#5b93ef55;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font-body);padding:32px 20px;}
+main{max-width:640px;margin:0 auto;}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;margin:0 0 10px;}
+h1{font-family:var(--font-display);font-weight:800;font-size:26px;margin:0 0 6px;text-wrap:balance;}
+.lede{color:var(--text-muted);margin:0 0 22px;line-height:1.5;max-width:56ch;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;box-shadow:0 12px 32px #10204010;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.field{display:flex;flex-direction:column;gap:6px;position:relative;}
+.field.full{grid-column:1/-1;}
+label{font-weight:600;font-size:13px;}
+label .opt{font-weight:500;color:var(--text-muted);}
+input,select,textarea{
+  width:100%;border:1px solid var(--border-strong);border-radius:10px;padding:10px 12px;
+  font:inherit;font-size:14px;background:var(--bg);color:var(--text);
+}
+textarea{min-height:96px;resize:vertical;}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--accent);}
+.hint{font-size:12px;color:var(--text-muted);}
+.check{display:flex;align-items:center;gap:8px;}
+.check input{width:auto;}
+.check label{font-weight:500;}
+.credentials-note{
+  grid-column:1/-1;display:flex;gap:10px;align-items:flex-start;
+  background:var(--bg);border:1px dashed var(--border-strong);border-radius:10px;padding:12px 14px;
+  font-size:12.5px;color:var(--text-muted);
+}
+.note.bs{
+  grid-column:1/-1;display:flex;gap:10px;align-items:flex-start;
+  background:var(--bs-bg);border:1px dashed var(--bs-border);border-radius:10px;padding:12px 14px;
+  font-size:12.5px;color:var(--bs-ink);
+}
+.note .badge{
+  flex:0 0 auto;width:22px;height:22px;border-radius:6px;background:var(--bs-ink);color:#fff;
+  font-family:var(--font-mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;
+}
+.actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:22px;}
+.status-line{font-size:13px;color:var(--text-muted);}
+.status-line.error{color:var(--danger);}
+button{
+  border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);
+  padding:12px 20px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;
+}
+button:disabled{opacity:.5;cursor:wait;}
+.banner{
+  display:none;border-radius:12px;padding:14px 16px;font-size:13.5px;line-height:1.5;margin-bottom:18px;
+}
+.banner.show{display:block;}
+.banner.error{background:var(--danger-bg);color:var(--danger);}
+.banner.success{background:var(--success-bg);color:var(--success);}
+.request-id{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+form.submitted .field:not(.locked-visible),form.submitted .actions{opacity:.45;pointer-events:none;}
+@media (max-width:600px){.grid{grid-template-columns:1fr;}}
+
+/* --- merged device multiselect --- */
+.ms-trigger{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:100%;border:1px solid var(--border-strong);border-radius:10px;padding:10px 12px;
+  font:inherit;font-size:14px;background:var(--bg);color:var(--text);cursor:pointer;text-align:left;
+}
+.ms-trigger:focus,.ms-trigger.open{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--accent);}
+.ms-trigger.invalid{border-color:var(--danger);}
+.ms-trigger .ms-chevron{color:var(--text-muted);transition:transform .15s;flex:0 0 auto;}
+.ms-trigger.open .ms-chevron{transform:rotate(180deg);}
+.ms-summary{color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-summary.has-value{color:var(--text);font-weight:500;}
+.ms-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.ms-chip{
+  display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border-strong);
+  border-radius:999px;padding:4px 6px 4px 10px;font-size:12px;font-weight:500;
+}
+.ms-chip.bs{background:var(--bs-bg);border-color:var(--bs-border);color:var(--bs-ink);}
+.ms-chip button{
+  all:unset;cursor:pointer;width:16px;height:16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:inherit;opacity:.65;
+}
+.ms-chip button:hover{opacity:1;background:#00000012;}
+.ms-panel{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:20;
+  background:var(--surface);border:1px solid var(--border-strong);border-radius:12px;
+  box-shadow:0 16px 40px #10204022;padding:8px;max-height:340px;overflow-y:auto;
+}
+.ms-panel[hidden]{display:none;}
+.ms-group{padding:6px 4px 10px;}
+.ms-group + .ms-group{border-top:1px solid var(--border);margin-top:4px;padding-top:10px;}
+.ms-group-label{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text-muted);padding:2px 8px 6px;}
+.ms-group-label .opt{text-transform:none;letter-spacing:0;font-weight:500;}
+.ms-subgroup-label{font-size:11.5px;font-weight:600;color:var(--text-muted);padding:8px 8px 2px;}
+.ms-option{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:13.5px;font-weight:500;cursor:pointer;}
+.ms-option:hover{background:var(--bg);}
+.ms-option input{width:auto;accent-color:var(--accent);}
+.new-tag{
+  font-family:var(--font-mono);font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--success);background:var(--success-bg);border-radius:5px;padding:1px 6px;margin-left:auto;flex:0 0 auto;
+}
+</style>
+
+<main>
+  <p class="eyebrow">Live QA Validator &middot; Incognito</p>
+  <h1>Start a QA validation session</h1>
+  <p class="lede">Fill in the request once. Claude reads it back the moment you confirm submission in chat.</p>
+
+  <div class="card">
+    <div id="dbBanner" class="banner error">This page needs live database access to collect intake, but the viewer did not grant it. Ask Claude to resend the form, or describe your request in chat instead.</div>
+    <div id="submitBanner" class="banner success">
+      Submitted <span class="request-id" id="submittedAt"></span>. Go back to the chat and tell Claude the intake form is done.
+      <div style="margin-top:10px"><button type="button" id="editBtn" style="padding:8px 14px;font-size:13px">Edit submission</button></div>
+    </div>
+
+    <form id="form">
+      <div class="grid">
+        <div class="field">
+          <label for="validationType">Validation type</label>
+          <select id="validationType" required>
+            <option value="new_test">New Test</option>
+            <option value="re_qa">Re-QA</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="deviceTrigger">Device(s) to test</label>
+          <button type="button" class="ms-trigger" id="deviceTrigger" aria-haspopup="listbox" aria-expanded="false">
+            <span class="ms-summary" id="deviceSummary">Select devices&hellip;</span>
+            <span class="ms-chevron">&#9662;</span>
+          </button>
+          <div class="ms-panel" id="devicePanel" hidden role="listbox" aria-multiselectable="true">
+            <div class="ms-group">
+              <div class="ms-group-label">Primary pass</div>
+              <label class="ms-option"><input type="checkbox" data-kind="standard" value="desktop" checked> Desktop</label>
+              <label class="ms-option"><input type="checkbox" data-kind="standard" value="mobile" checked> Mobile</label>
+            </div>
+            <div class="ms-group">
+              <div class="ms-group-label">Real devices &mdash; BrowserStack <span class="opt">(optional, adds a supplementary pass per device picked)</span></div>
+              <div class="ms-subgroup-label">iPhone</div>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="iphone17promax" data-label="iPhone 17 Pro Max (iOS 26)" data-os="ios" data-osv="26" data-dev="iPhone 17 Pro Max" data-br=""> iPhone 17 Pro Max (iOS 26) <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="iphone16" data-label="iPhone 16 (iOS 18)" data-os="ios" data-osv="18" data-dev="iPhone 16" data-br=""> iPhone 16 (iOS 18) <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="iphone15promax" data-label="iPhone 15 Pro Max (iOS 17)" data-os="ios" data-osv="17" data-dev="iPhone 15 Pro Max" data-br=""> iPhone 15 Pro Max (iOS 17)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="iphone15" data-label="iPhone 15 (iOS 17)" data-os="ios" data-osv="17" data-dev="iPhone 15" data-br=""> iPhone 15 (iOS 17)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="iphone14" data-label="iPhone 14 (iOS 16)" data-os="ios" data-osv="16" data-dev="iPhone 14" data-br=""> iPhone 14 (iOS 16)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="iphone13" data-label="iPhone 13 (iOS 15)" data-os="ios" data-osv="15" data-dev="iPhone 13" data-br=""> iPhone 13 (iOS 15)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="iphonese2022" data-label="iPhone SE 2022 (iOS 15)" data-os="ios" data-osv="15" data-dev="iPhone SE 2022" data-br=""> iPhone SE 2022 (iOS 15)</label>
+              <div class="ms-subgroup-label">iPad</div>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="ipadpro129-2022" data-label="iPad Pro 12.9&quot; 2022 (iPadOS 16)" data-os="ios" data-osv="16" data-dev="iPad Pro 12.9 2022" data-br=""> iPad Pro 12.9&Prime; 2022 (iPadOS 16)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="ipadair2022" data-label="iPad Air 2022 (iPadOS 15)" data-os="ios" data-osv="15" data-dev="iPad Air 2022" data-br=""> iPad Air 2022 (iPadOS 15)</label>
+              <div class="ms-subgroup-label">Android &mdash; Samsung</div>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="galaxys26ultra" data-label="Samsung Galaxy S26 Ultra (Android 16, Chrome)" data-os="android" data-osv="16.0" data-dev="Samsung Galaxy S26 Ultra" data-br="chrome"> Samsung Galaxy S26 Ultra (Android 16, Chrome) <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="galaxys25ultra" data-label="Samsung Galaxy S25 Ultra (Android 15, Chrome)" data-os="android" data-osv="15.0" data-dev="Samsung Galaxy S25 Ultra" data-br="chrome"> Samsung Galaxy S25 Ultra (Android 15, Chrome) <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="galaxys24" data-label="Samsung Galaxy S24 (Android 14, Chrome)" data-os="android" data-osv="14.0" data-dev="Samsung Galaxy S24" data-br="chrome"> Samsung Galaxy S24 (Android 14, Chrome)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="galaxys23" data-label="Samsung Galaxy S23 (Android 13, Chrome)" data-os="android" data-osv="13.0" data-dev="Samsung Galaxy S23" data-br="chrome"> Samsung Galaxy S23 (Android 13, Chrome)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="galaxytabs11" data-label="Samsung Galaxy Tab S11 (Android 16, Chrome)" data-os="android" data-osv="16.0" data-dev="Samsung Galaxy Tab S11" data-br="chrome"> Samsung Galaxy Tab S11 (Android 16, Chrome) <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="galaxytabs9" data-label="Samsung Galaxy Tab S9 (Android 13, Chrome)" data-os="android" data-osv="13.0" data-dev="Samsung Galaxy Tab S9" data-br="chrome"> Samsung Galaxy Tab S9 (Android 13, Chrome)</label>
+              <div class="ms-subgroup-label">Android &mdash; Google Pixel</div>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="pixel10" data-label="Google Pixel 10 (Android 16, Chrome)" data-os="android" data-osv="16.0" data-dev="Google Pixel 10" data-br="chrome"> Google Pixel 10 (Android 16, Chrome) <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="pixel8" data-label="Google Pixel 8 (Android 14, Chrome)" data-os="android" data-osv="14.0" data-dev="Google Pixel 8" data-br="chrome"> Google Pixel 8 (Android 14, Chrome)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="pixel7" data-label="Google Pixel 7 (Android 13, Chrome)" data-os="android" data-osv="13.0" data-dev="Google Pixel 7" data-br="chrome"> Google Pixel 7 (Android 13, Chrome)</label>
+              <div class="ms-subgroup-label">Android &mdash; Other brands</div>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="redminote14pro5g" data-label="Redmi Note 14 Pro 5G (Android 15, Chrome)" data-os="android" data-osv="15.0" data-dev="Redmi Note 14 Pro 5G" data-br="chrome"> Redmi Note 14 Pro 5G (Android 15, Chrome)</label>
+              <div class="ms-subgroup-label">Desktop &mdash; macOS</div>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="macsequoia-safari" data-label="macOS Sequoia — Safari" data-os="OS X" data-osv="Sequoia" data-dev="" data-br="safari"> macOS Sequoia &mdash; Safari <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="macsequoia-chrome" data-label="macOS Sequoia — Chrome (latest)" data-os="OS X" data-osv="Sequoia" data-dev="" data-br="chrome"> macOS Sequoia &mdash; Chrome (latest) <span class="new-tag">new</span></label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="macsonoma-safari" data-label="macOS Sonoma — Safari" data-os="OS X" data-osv="Sonoma" data-dev="" data-br="safari"> macOS Sonoma &mdash; Safari</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="macsonoma-chrome" data-label="macOS Sonoma — Chrome (latest)" data-os="OS X" data-osv="Sonoma" data-dev="" data-br="chrome"> macOS Sonoma &mdash; Chrome (latest)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="macventura-safari" data-label="macOS Ventura — Safari" data-os="OS X" data-osv="Ventura" data-dev="" data-br="safari"> macOS Ventura &mdash; Safari</label>
+              <div class="ms-subgroup-label">Desktop &mdash; Windows</div>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="win11-chrome" data-label="Windows 11 — Chrome (latest)" data-os="Windows" data-osv="11" data-dev="" data-br="chrome"> Windows 11 &mdash; Chrome (latest)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="win11-edge" data-label="Windows 11 — Edge (latest)" data-os="Windows" data-osv="11" data-dev="" data-br="edge"> Windows 11 &mdash; Edge (latest)</label>
+              <label class="ms-option"><input type="checkbox" data-kind="bs" value="win10-firefox" data-label="Windows 10 — Firefox (latest)" data-os="Windows" data-osv="10" data-dev="" data-br="firefox"> Windows 10 &mdash; Firefox (latest)</label>
+            </div>
+          </div>
+          <div class="ms-chips" id="deviceChips"></div>
+        </div>
+
+        <div class="field full">
+          <label for="jira">Jira issue URL</label>
+          <input id="jira" type="url" required placeholder="https://your-company.atlassian.net/browse/PROJ-123">
+          <div class="hint">Used to find the Figma/design link. Re-QA treats the Jira description as the source of truth.</div>
+        </div>
+
+        <div class="field full">
+          <label for="acceptanceCriteria">Acceptance criteria <span class="opt" id="acOptTag" hidden>(optional)</span></label>
+          <textarea id="acceptanceCriteria" required placeholder="Paste or type the acceptance criteria for this feature/change"></textarea>
+          <div class="hint">Required for New Test — used directly as the source of acceptance criteria, no Cosmos link needed. Optional for Re-QA, where the Jira description stays authoritative and this is treated as supplemental context.</div>
+        </div>
+
+        <div class="field full">
+          <label for="target">Target URL(s)</label>
+          <textarea id="target" required placeholder="https://example.com/qa&#10;https://example.com/qa?page=2" rows="3"></textarea>
+          <div class="hint">One URL per line. Add more than one if this validation needs to cover multiple pages/URLs.</div>
+        </div>
+
+        <div class="field full">
+          <label for="additionalInstructions">Additional validation instructions <span class="opt">(optional)</span></label>
+          <textarea id="additionalInstructions" placeholder="Scope or constraints not already covered by Jira"></textarea>
+        </div>
+
+        <div class="note bs">
+          <span class="badge">BS</span>
+          <span>Every real device you tick above runs as its own supplementary BrowserStack Live pass, after the primary Desktop/Mobile browser-tab validation. Sessions are interactive, so Claude drives them visually rather than reading the page directly, and will share what it finds.</span>
+        </div>
+
+        <div class="field full check">
+          <input id="restore" type="checkbox" checked>
+          <label for="restore">Restore reversible test-data changes after validation</label>
+        </div>
+
+        <div class="credentials-note">
+          <span>&#128274;</span>
+          <span>Login credentials are never collected here. If the target needs a sign-in, Claude will ask for the username and password directly in chat right before it authenticates, and it never stores them.</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <span class="status-line" id="statusLine">Ready.</span>
+        <button id="submitBtn" type="submit">Submit intake</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script>
+(async () => {
+  const form = document.getElementById('form');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusLine = document.getElementById('statusLine');
+  const dbBanner = document.getElementById('dbBanner');
+  const submitBanner = document.getElementById('submitBanner');
+  const validationType = document.getElementById('validationType');
+  const acceptanceCriteria = document.getElementById('acceptanceCriteria');
+  const acOptTag = document.getElementById('acOptTag');
+
+  function updateAcceptanceCriteriaRequirement() {
+    const isNewTest = validationType.value === 'new_test';
+    acceptanceCriteria.required = isNewTest;
+    acOptTag.hidden = isNewTest;
+  }
+  validationType.addEventListener('change', updateAcceptanceCriteriaRequirement);
+  updateAcceptanceCriteriaRequirement();
+
+  // --- merged device multiselect ---
+  const deviceTrigger = document.getElementById('deviceTrigger');
+  const devicePanel = document.getElementById('devicePanel');
+  const deviceSummary = document.getElementById('deviceSummary');
+  const deviceChips = document.getElementById('deviceChips');
+  const deviceCheckboxes = Array.from(devicePanel.querySelectorAll('input[type="checkbox"]'));
+
+  function closeDevicePanel() {
+    devicePanel.hidden = true;
+    deviceTrigger.classList.remove('open');
+    deviceTrigger.setAttribute('aria-expanded', 'false');
+  }
+  function openDevicePanel() {
+    devicePanel.hidden = false;
+    deviceTrigger.classList.add('open');
+    deviceTrigger.setAttribute('aria-expanded', 'true');
+  }
+  deviceTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (devicePanel.hidden) openDevicePanel(); else closeDevicePanel();
+  });
+  document.addEventListener('click', (e) => {
+    if (!devicePanel.hidden && !devicePanel.contains(e.target) && e.target !== deviceTrigger) closeDevicePanel();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDevicePanel();
+  });
+
+  function getDeviceSelection() {
+    const standard = deviceCheckboxes
+      .filter(cb => cb.dataset.kind === 'standard' && cb.checked)
+      .map(cb => cb.value);
+    const browserstack = deviceCheckboxes
+      .filter(cb => cb.dataset.kind === 'bs' && cb.checked)
+      .map(cb => ({
+        label: cb.dataset.label,
+        os: cb.dataset.os || '',
+        osVersion: cb.dataset.osv || '',
+        device: cb.dataset.dev || '',
+        browser: cb.dataset.br || '',
+        _cbValue: cb.value,
+      }));
+    return { standard, browserstack };
+  }
+
+  function renderDeviceField() {
+    const { standard, browserstack } = getDeviceSelection();
+
+    const parts = [];
+    if (standard.includes('desktop')) parts.push('Desktop');
+    if (standard.includes('mobile')) parts.push('Mobile');
+    let summaryText = parts.join(', ') || 'Select devices…';
+    if (browserstack.length === 1) summaryText += ' + 1 real device';
+    else if (browserstack.length > 1) summaryText += ` + ${browserstack.length} real devices`;
+    deviceSummary.textContent = summaryText;
+    deviceSummary.classList.toggle('has-value', standard.length > 0 || browserstack.length > 0);
+    deviceTrigger.classList.toggle('invalid', standard.length === 0);
+
+    deviceChips.innerHTML = '';
+    standard.forEach(v => {
+      deviceChips.appendChild(makeDeviceChip(v === 'desktop' ? 'Desktop' : 'Mobile', false, () => {
+        deviceCheckboxes.find(cb => cb.dataset.kind === 'standard' && cb.value === v).checked = false;
+        renderDeviceField();
+      }));
+    });
+    browserstack.forEach(d => {
+      deviceChips.appendChild(makeDeviceChip(d.label, true, () => {
+        deviceCheckboxes.find(cb => cb.dataset.kind === 'bs' && cb.value === d._cbValue).checked = false;
+        renderDeviceField();
+      }));
+    });
+  }
+
+  function makeDeviceChip(label, isBs, onRemove) {
+    const chip = document.createElement('span');
+    chip.className = 'ms-chip' + (isBs ? ' bs' : '');
+    const text = document.createElement('span');
+    text.textContent = label;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '✕';
+    btn.setAttribute('aria-label', 'Remove ' + label);
+    btn.addEventListener('click', (e) => { e.stopPropagation(); onRemove(); });
+    chip.appendChild(text);
+    chip.appendChild(btn);
+    return chip;
+  }
+
+  deviceCheckboxes.forEach(cb => cb.addEventListener('change', renderDeviceField));
+  renderDeviceField();
+
+  // --- target URL(s) ---
+  const targetField = document.getElementById('target');
+  function getTargetUrls() {
+    return targetField.value
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+  function validateTargetUrls(urls) {
+    if (urls.length === 0) return 'Enter at least one target URL.';
+    for (const u of urls) {
+      try { new URL(u); } catch { return 'Not a valid URL: ' + u; }
+    }
+    return null;
+  }
+
+  let db = null;
+  try {
+    db = await claude.use('db');
+  } catch {
+    db = null;
+  }
+  if (!db) {
+    dbBanner.classList.add('show');
+    submitBtn.disabled = true;
+    statusLine.textContent = 'Database unavailable.';
+    return;
+  }
+
+  function showSubmitted(ts) {
+    const stamp = new Date(ts);
+    document.getElementById('submittedAt').textContent =
+      '(' + stamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ')';
+    submitBanner.classList.add('show');
+    form.classList.add('submitted');
+    statusLine.textContent = 'Submitted.';
+    submitBtn.disabled = true;
+  }
+
+  document.getElementById('editBtn').addEventListener('click', () => {
+    form.classList.remove('submitted');
+    submitBanner.classList.remove('show');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Update intake';
+    statusLine.textContent = 'Editing — submit again to save changes.';
+  });
+
+  // Prefill from any existing submission
+  try {
+    const snap = await db.doc('intake/current').get();
+    const d = snap && (typeof snap.data === 'function' ? snap.data() : (snap.data || snap));
+    if (d && d.validationType) {
+      validationType.value = d.validationType;
+      updateAcceptanceCriteriaRequirement();
+      document.getElementById('jira').value = d.jiraUrl || '';
+      acceptanceCriteria.value = d.acceptanceCriteria || '';
+      document.getElementById('additionalInstructions').value = d.additionalInstructions || '';
+      targetField.value = (d.targetUrls || (d.targetUrl ? [d.targetUrl] : [])).join('\n');
+      document.getElementById('restore').checked = !!d.restoreChanges;
+      const std = (d.device && d.device.standard) || [];
+      const bs = ((d.device && d.device.browserstack) || []).map(x => x.label);
+      deviceCheckboxes.forEach(cb => {
+        cb.checked = cb.dataset.kind === 'standard' ? std.includes(cb.value) : bs.includes(cb.dataset.label);
+      });
+      renderDeviceField();
+      if (d.status === 'submitted') showSubmitted(d.submittedAt || Date.now());
+    }
+  } catch { /* no prior submission */ }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const { standard, browserstack } = getDeviceSelection();
+    if (standard.length === 0) {
+      statusLine.textContent = 'Pick at least Desktop or Mobile under "Device(s) to test".';
+      statusLine.classList.add('error');
+      openDevicePanel();
+      return;
+    }
+    const targetUrls = getTargetUrls();
+    const targetError = validateTargetUrls(targetUrls);
+    if (targetError) {
+      statusLine.textContent = targetError;
+      statusLine.classList.add('error');
+      targetField.focus();
+      return;
+    }
+    statusLine.classList.remove('error');
+
+    submitBtn.disabled = true;
+    statusLine.textContent = 'Submitting…';
+    try {
+      const payload = {
+        validationType: validationType.value,
+        jiraUrl: document.getElementById('jira').value.trim(),
+        acceptanceCriteria: document.getElementById('acceptanceCriteria').value.trim(),
+        additionalInstructions: document.getElementById('additionalInstructions').value.trim(),
+        targetUrls: targetUrls,
+        targetUrl: targetUrls[0],
+        device: {
+          standard: standard,
+          browserstack: browserstack.map(({ _cbValue, ...rest }) => rest),
+        },
+        restoreChanges: document.getElementById('restore').checked,
+        status: 'submitted',
+        submittedAt: Date.now(),
+      };
+      await db.doc('intake/current').set(payload);
+      showSubmitted(payload.submittedAt);
+    } catch {
+      statusLine.textContent = 'Could not submit. Check the required fields and try again.';
+      submitBtn.disabled = false;
+    }
+  });
+})();
+</script>

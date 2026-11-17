@@ -1,0 +1,5 @@
+{
+  "name": "live-qa-validator-incognito",
+  "version": "0.1.18",
+  "description": "Live QA intake panel using the standard MCP Apps client. Isolated Chrome DevTools context target flow (incognito-equivalent clean state) with an optional multi-select BrowserStack real-device pass. Acceptance criteria and one or more Target URLs (multi-line) are free-text intake fields. Requires positive/negative test-case pairing, a matrix approval gate before execution, rigorous Figma-vs-live UI comparison, and annotated screenshot-comparison images for every UI defect."
+}
